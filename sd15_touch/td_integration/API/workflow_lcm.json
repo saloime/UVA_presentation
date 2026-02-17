@@ -1,0 +1,77 @@
+{
+  "1": {
+    "inputs": {
+      "ckpt_name": "v1-5-pruned-emaonly.safetensors"
+    },
+    "class_type": "CheckpointLoaderSimple",
+    "_meta": { "title": "Load SD1.5" }
+  },
+  "2": {
+    "inputs": {
+      "lora_name": "pytorch_lora_weights.safetensors",
+      "strength_model": 1.0,
+      "strength_clip": 1.0,
+      "model": ["1", 0],
+      "clip": ["1", 1]
+    },
+    "class_type": "LoraLoader",
+    "_meta": { "title": "LCM LoRA" }
+  },
+  "3": {
+    "inputs": {
+      "text": "a vibrant abstract landscape, glowing colors, cinematic, highly detailed",
+      "clip": ["2", 1]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": { "title": "Positive Prompt" }
+  },
+  "4": {
+    "inputs": {
+      "text": "blurry, bad quality, watermark",
+      "clip": ["2", 1]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": { "title": "Negative Prompt" }
+  },
+  "5": {
+    "inputs": {
+      "width": 512,
+      "height": 512,
+      "batch_size": 1
+    },
+    "class_type": "EmptyLatentImage",
+    "_meta": { "title": "Latent (512x512)" }
+  },
+  "6": {
+    "inputs": {
+      "seed": -1,
+      "steps": 2,
+      "cfg": 1.5,
+      "sampler_name": "lcm",
+      "scheduler": "sgm_uniform",
+      "denoise": 1.0,
+      "model": ["2", 0],
+      "positive": ["3", 0],
+      "negative": ["4", 0],
+      "latent_image": ["5", 0]
+    },
+    "class_type": "KSampler",
+    "_meta": { "title": "KSampler (LCM 2 steps ~1.4s)" }
+  },
+  "7": {
+    "inputs": {
+      "samples": ["6", 0],
+      "vae": ["1", 2]
+    },
+    "class_type": "VAEDecode",
+    "_meta": { "title": "VAE Decode" }
+  },
+  "8": {
+    "inputs": {
+      "filename_prefix": "td_out",
+      "images": ["7", 0]
+    },
+    "class_type": "SaveImage",
+    "_meta": { "title": "Save Output" }
+  }
+}

@@ -1,0 +1,5 @@
+1. READ all returns from LLMs, and edit the response before copying and pasting
+2. Simplify your request
+3. Ask in a different way — change you conditioning type, try new text tokens, and different image to image workflows
+4. Export your workflow and note your prompt and settings whenever you get a result worth keeping
+5. Use multiple results from generative tools to form your final product. Treat AI output as raw material, combine, layer, and edit

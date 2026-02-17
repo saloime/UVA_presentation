@@ -1,0 +1,75 @@
+# AI Image Generation Vocabulary
+
+## Core Concepts
+
+**token** — The basic unit of text an AI model processes. Words are broken into tokens (e.g., "beautiful" ≈ 1–2 tokens). SD1.5 has a ~77-token limit per prompt.
+
+**prompt** — The text description given to guide generation. Positive prompt: what you want. Negative prompt: what you want to avoid.
+
+**text conditioning** — Using a text prompt to steer what the AI generates. The text is encoded by CLIP and used to guide the diffusion process.
+
+**image conditioning** — Using an input image (rather than just text) to guide generation. Examples: img2img, ControlNet, IP-Adapter.
+
+**latent space** — The compressed internal space where diffusion models do their work. Much smaller than full pixel resolution, which is why generation is fast.
+
+**diffusion model** — A class of AI model that generates images by gradually removing noise from a random signal. Stable Diffusion is a diffusion model.
+
+**checkpoint** — A saved snapshot of a fully trained model. In image generation, "the checkpoint" usually means the main model file (e.g., v1-5-pruned-emaonly.safetensors).
+
+**denoise** — In img2img, controls how much of the original image is preserved. 0.0 = unchanged input, 1.0 = completely new image.
+
+**cfg (classifier-free guidance)** — A value controlling how strongly the model follows your prompt. Higher = more prompt-adherent but can over-saturate. Typical range: 1–12. LCM works best at 1.0–2.0.
+
+**sampler** — The algorithm that iteratively removes noise. Examples: Euler, DPM++, LCM. Different samplers produce different looks and require different step counts.
+
+**steps** — How many denoising iterations to run. More steps = slower but (usually) better quality. LCM dramatically reduces this to 2–8 steps.
+
+---
+
+## Model Components
+
+**clip** — Contrastive Language-Image Pre-training. Encodes text prompts into a format the diffusion model can understand. Also used by IP-Adapter to understand reference images.
+
+**vae** — Variational Autoencoder. Compresses full images into latent space for diffusion, then decodes the result back to pixels. A bad VAE causes black images or colour shifts.
+
+**lora** — Low-Rank Adaptation. A small add-on model that fine-tunes a base checkpoint for a specific style, character, or concept without replacing the base model.
+
+**controlnet** — An add-on that adds structural control to generation using input images — edge maps, depth maps, pose skeletons, etc. Preserves composition while changing style.
+
+**ip-adapter** — Image Prompt Adapter. Transfers visual style from a reference image to the generated output, working alongside (not instead of) text prompts.
+
+**lcm (latent consistency model)** — A technique that reduces generation steps from 20–50 down to 2–8 while maintaining quality. Enabled via a LoRA.
+
+---
+
+## Tools & Platforms
+
+**comfyui** — Open-source node-based UI for building AI image/video generation pipelines. Each processing step is a "node"; nodes are connected with wires to form a workflow.
+
+**node** — In ComfyUI, one processing step (e.g., "Load Model", "KSampler", "VAE Decode"). Nodes connect together to form the full pipeline.
+
+**ai toolkit** — A set of tools for working with AI models — training, fine-tuning, inference. Commonly refers to tools like kohya_ss for LoRA training.
+
+**fal.ai** — A cloud platform for running AI models (Stable Diffusion, FLUX, etc.) without a local GPU. Pay per generation.
+
+**runpod.io** — A cloud GPU rental service. Rent an NVIDIA GPU by the hour to run ComfyUI or other AI tools remotely — useful for large models or fast generation.
+
+**weavy.ai** — An AI platform offering generative and creative AI tools accessible via browser.
+
+---
+
+## Image & Video Models
+
+**flux** — A family of high-quality image generation models (FLUX.1 [dev], FLUX.1 [schnell]) from Black Forest Labs (2024). Strong prompt adherence and detail.
+
+**qwen image** — Multimodal AI model from Alibaba that can both understand images and generate them. Part of the Qwen model family.
+
+**wan** — Wan2.1 — a video generation model capable of producing high-quality video from text or image prompts.
+
+**hunyuan** — HunyuanVideo / HunyuanDiT — image and video generation models from Tencent, capable of long-form video generation.
+
+**kling** — Kling AI — a video generation model from Kuaishou known for high-quality, realistic video output.
+
+**veo** — Google DeepMind's video generation model (Veo 2). Generates high-quality, physically plausible video from text prompts.
+
+**nanobanana** — A community-built ComfyUI workflow/tool for lightweight or experimental image generation setups.
