@@ -58,6 +58,46 @@ bash setup.sh
 
 ---
 
+## Lab Install (existing ComfyUI — UVA lab machines)
+
+If ComfyUI is **already installed** on the machine, use `lab_install.sh` instead of `setup.sh`.
+It adds the required models, custom nodes, and workflow files to the existing install — and creates a
+desktop icon to launch ComfyUI.
+
+```bash
+git clone https://github.com/saloime/UVA_presentation.git
+cd UVA_presentation/sd15_touch
+bash lab_install.sh
+```
+
+The script auto-detects the ComfyUI data folder. If it can't find it, pass the path explicitly:
+
+```bash
+bash lab_install.sh --comfyui-path /path/to/ComfyUI
+```
+
+Common paths on macOS:
+
+| ComfyUI install type | Typical path |
+|----------------------|--------------|
+| Desktop app | `~/Library/Application Support/ComfyUI` |
+| Source (git clone) | wherever you cloned it, e.g. `~/ComfyUI` |
+
+`lab_install.sh` automatically:
+1. Installs **ComfyUI Manager** (manages custom node updates and dependencies)
+2. Clones **IPAdapter Plus** and **ControlNet Aux** custom nodes
+3. Downloads all model weights (~7 GB) — skips files already present
+4. Copies workflow JSONs into `ComfyUI/API/`
+5. Creates a **"Launch ComfyUI"** shortcut on the Desktop
+
+> **Desktop app note:** On first launch after install, ComfyUI Manager may prompt to install
+> missing custom node requirements. Click **Install** when prompted and restart ComfyUI.
+
+After setup, open TouchDesigner and set the **Basefolder** in the ComfyTD component to the path
+shown at the end of the install script output.
+
+---
+
 ## Running
 
 ### 1. Start ComfyUI

@@ -24,6 +24,9 @@ ENV/
 **/venv/
 **/.venv/
 
+# ── lab_install.sh temporary download venv ───────────────────────────────────────
+sd15_touch/.dl_venv/
+
 # ── Environment / secrets ───────────────────────────────────────────────────────
 .env
 *.env
