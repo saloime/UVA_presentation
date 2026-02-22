@@ -1,12 +1,12 @@
-# ── OS ─────────────────────────────────────────────────────────────────────────
+# ── OS ──────────────────────────────────────────────────────────────────────
 .DS_Store
 **/.DS_Store
 Thumbs.db
 
-# ── Claude Code memory (local only) ─────────────────────────────────────────────
+# ── Claude Code memory (local only) ─────────────────────────────────────────
 .claude/
 
-# ── Python ─────────────────────────────────────────────────────────────────────
+# ── Python ──────────────────────────────────────────────────────────────────
 __pycache__/
 **/__pycache__/
 *.py[cod]
@@ -16,7 +16,7 @@ __pycache__/
 dist/
 build/
 
-# ── Virtual environments ────────────────────────────────────────────────────────
+# ── Virtual environments ─────────────────────────────────────────────────────
 venv/
 .venv/
 env/
@@ -24,18 +24,15 @@ ENV/
 **/venv/
 **/.venv/
 
-# ── lab_install.sh temporary download venv ───────────────────────────────────────
-sd15_touch/.dl_venv/
-
-# ── Environment / secrets ───────────────────────────────────────────────────────
+# ── Environment / secrets ────────────────────────────────────────────────────
 .env
 *.env
 .env.*
 
-# ── ComfyUI (cloned by setup.sh — not committed) ───────────────────────────────
-sd15_touch/ComfyUI/
+# ── sd15_touch — now its own repo (github.com/saloime/sd15_touch) ────────────
+sd15_touch/
 
-# ── Model weights (downloaded by setup.sh — not committed) ─────────────────────
+# ── Model weights ────────────────────────────────────────────────────────────
 *.safetensors
 *.bin
 *.pt
@@ -43,15 +40,11 @@ sd15_touch/ComfyUI/
 *.ckpt
 *.pkl
 
-# ── HuggingFace download cache ──────────────────────────────────────────────────
+# ── HuggingFace download cache ───────────────────────────────────────────────
 .cache/
 **/.cache/
 
-
-# ── Deprecated / archived code ─────────────────────────────────────────────────
-sd15_touch/td_integration/deprecated/
-
-# ── Images / media (not version-controlled) ─────────────────────────────────────
+# ── Images / media ───────────────────────────────────────────────────────────
 images/
 *.jpg
 *.jpeg
@@ -61,7 +54,7 @@ images/
 *.mp4
 *.mov
 
-# ── Misc ────────────────────────────────────────────────────────────────────────
+# ── Misc ─────────────────────────────────────────────────────────────────────
 *.lock
 *.log
 *.swp
