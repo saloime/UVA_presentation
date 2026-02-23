@@ -1,75 +1,244 @@
 # AI Image Generation Vocabulary
 
+---
+
 ## Core Concepts
 
-**token** — The basic unit of text an AI model processes. Words are broken into tokens (e.g., "beautiful" ≈ 1–2 tokens). SD1.5 has a ~77-token limit per prompt.
+**attention** — The mechanism that lets a model relate different parts of its input to each other. In diffusion models, cross-attention links text tokens to image regions; self-attention relates image regions to each other.
 
-**prompt** — The text description given to guide generation. Positive prompt: what you want. Negative prompt: what you want to avoid.
+**batch size** — How many images to generate in parallel in one run. Larger batches use more VRAM but finish faster per image.
 
-**text conditioning** — Using a text prompt to steer what the AI generates. The text is encoded by CLIP and used to guide the diffusion process.
-
-**image conditioning** — Using an input image (rather than just text) to guide generation. Examples: img2img, ControlNet, IP-Adapter.
-
-**latent space** — The compressed internal space where diffusion models do their work. Much smaller than full pixel resolution, which is why generation is fast.
-
-**diffusion model** — A class of AI model that generates images by gradually removing noise from a random signal. Stable Diffusion is a diffusion model.
+**cfg (classifier-free guidance)** — Controls how strictly the model follows your prompt. Higher = more prompt-adherent but can over-saturate or distort. Typical range: 1–12. LCM works best at 1.0–2.0.
 
 **checkpoint** — A saved snapshot of a fully trained model. In image generation, "the checkpoint" usually means the main model file (e.g., v1-5-pruned-emaonly.safetensors).
 
-**denoise** — In img2img, controls how much of the original image is preserved. 0.0 = unchanged input, 1.0 = completely new image.
+**conditioning** — Any input used to steer the model — text, images, depth maps, masks. The model is "conditioned" on this information during generation.
 
-**cfg (classifier-free guidance)** — A value controlling how strongly the model follows your prompt. Higher = more prompt-adherent but can over-saturate. Typical range: 1–12. LCM works best at 1.0–2.0.
+**diffusion model** — A class of AI model that generates images by gradually removing noise from a random signal, guided by a prompt or image. Stable Diffusion, FLUX, and HunyuanVideo are all diffusion models.
 
-**sampler** — The algorithm that iteratively removes noise. Examples: Euler, DPM++, LCM. Different samplers produce different looks and require different step counts.
+**embedding** — A high-dimensional numerical vector representing text or image data. Models work in embedding space, not with raw pixels or characters.
 
-**steps** — How many denoising iterations to run. More steps = slower but (usually) better quality. LCM dramatically reduces this to 2–8 steps.
+**guidance scale** — Another name for CFG. Scales how much the model moves toward your prompt at each step.
+
+**inference** — Running a trained model to produce an output. Not training — just using the model. "Inference time" = how long generation takes.
+
+**latent space** — The compressed internal representation where diffusion models work. Images are encoded into latents (smaller than full pixels), processed, then decoded back. This is what makes generation fast.
+
+**model** — A trained neural network. "The model" in ComfyUI typically refers to the checkpoint (UNet + CLIP + VAE bundled).
+
+**negative prompt** — Text describing what you want to avoid in the output. Guides the model away from certain content, styles, or artifacts.
+
+**noise** — Random pixel values the diffusion process starts from. The model progressively removes noise over many steps to produce a coherent image.
+
+**prompt** — The text description given to guide generation. Positive prompt: what you want. Negative prompt: what you want to avoid.
+
+**resolution** — The pixel dimensions of the output image. SD1.5 is trained at 512×512; SDXL at 1024×1024. Generating at non-native resolutions can cause artifacts.
+
+**seed** — The number that initializes the random noise the diffusion starts from. Same seed + same settings = same image. Change the seed to get a different result.
+
+**text conditioning** — Using a text prompt to steer what the model generates. The prompt is encoded by CLIP and injected into the model at each denoising step.
+
+**token** — The basic unit of text an AI model processes. Words are broken into tokens ("beautiful" ≈ 1–2 tokens). SD1.5 has a ~77-token limit per prompt; exceeding it truncates your prompt silently.
+
+---
+
+## KSampler Parameters
+
+The KSampler node is the core of most ComfyUI workflows. These are its key controls:
+
+**seed** — Sets the starting random noise. Fixed seed = reproducible result. "Randomize" generates a different image each time.
+
+**steps** — How many denoising iterations to run. More steps = slower but generally higher quality. LCM reduces this to 2–8 steps. Most standard samplers need 20–30.
+
+**cfg (classifier-free guidance)** — See Core Concepts. Set lower (1–2) for LCM, higher (5–9) for most other samplers.
+
+**sampler name** — The algorithm controlling how noise is removed step-by-step. Common options:
+- *Euler / Euler a* — fast, slightly painterly
+- *DPM++ 2M / DPM++ SDE* — sharp detail, popular default
+- *LCM* — very fast, for LCM LoRA workflows
+- *DDIM* — deterministic, good for inpainting
+- *Heun* — slower but accurate
+
+**scheduler** — Controls the noise level at each step (the "schedule" of how fast to denoise). Common options:
+- *Karras* — smoother curves, widely used, good with DPM++
+- *Normal* — linear schedule, stable default
+- *Exponential* — aggressive early steps
+- *SGM Uniform* — used with LCM; matches LCM's training distribution
+
+**denoise** — In img2img, how much of the original image to preserve. 0.0 = no change, 1.0 = fully new image from noise. 0.4–0.7 is a common creative range.
 
 ---
 
 ## Model Components
 
-**clip** — Contrastive Language-Image Pre-training. Encodes text prompts into a format the diffusion model can understand. Also used by IP-Adapter to understand reference images.
+**clip (Contrastive Language-Image Pre-training)** — Encodes text prompts into vectors the diffusion model can understand. Also used by IP-Adapter to encode reference images visually.
 
-**vae** — Variational Autoencoder. Compresses full images into latent space for diffusion, then decodes the result back to pixels. A bad VAE causes black images or colour shifts.
+**clip skip** — How many layers to skip from the end of the CLIP text encoder. Skip 1 (default) = full encoding. Skip 2 = SD1.5 anime models often prefer this, producing a softer interpretation.
 
-**lora** — Low-Rank Adaptation. A small add-on model that fine-tunes a base checkpoint for a specific style, character, or concept without replacing the base model.
+**clip vision** — The image encoder variant of CLIP. Converts a reference image into a vector so IP-Adapter can apply its style to the generation.
 
-**controlnet** — An add-on that adds structural control to generation using input images — edge maps, depth maps, pose skeletons, etc. Preserves composition while changing style.
+**controlnet** — An add-on that guides image structure using preprocessed input images — edge maps (Canny), depth maps, pose skeletons, etc. Preserves composition while changing style.
 
-**ip-adapter** — Image Prompt Adapter. Transfers visual style from a reference image to the generated output, working alongside (not instead of) text prompts.
+**embedding / textual inversion** — A trained word-vector encoding a specific concept, style, or person. Loaded into the CLIP encoder like a new vocabulary word. Smaller and simpler than a LoRA.
 
-**lcm (latent consistency model)** — A technique that reduces generation steps from 20–50 down to 2–8 while maintaining quality. Enabled via a LoRA.
+**ip-adapter (Image Prompt Adapter)** — Transfers visual style from a reference image into the generation. Works alongside text prompts rather than replacing them. Requires a CLIP Vision encoder.
+
+**lcm (Latent Consistency Model)** — Reduces generation from 20–50 steps to 2–8 while preserving quality. Applied as a LoRA on top of a base checkpoint.
+
+**lora (Low-Rank Adaptation)** — A small add-on model that fine-tunes a base checkpoint for a specific style, character, or concept. Stacks on top of the base model without replacing it. Multiple LoRAs can be loaded at once with different weights.
+
+**unet** — The core neural network of a diffusion model. Performs the actual denoising at each step. When people refer to "the model weights," they mostly mean the UNet.
+
+**vae (Variational Autoencoder)** — Compresses full-resolution images into latent space for diffusion, then decodes them back to pixels. A mismatched or broken VAE causes washed-out colors, black images, or NaN artifacts.
+
+---
+
+## Vision & Image Understanding
+
+**BLIP / BLIP-2 (Bootstrapping Language-Image Pre-training)** — A vision-language model that generates text descriptions of images. Widely used in ComfyUI for auto-captioning datasets before LoRA training. BLIP-2 uses a large language model backbone for richer captions.
+
+**caption** — A text description of an image, used during training to teach the model what it is seeing. Auto-captioned by BLIP or tagged manually. Quality of captions directly affects training quality.
+
+**computer vision** — The field of AI focused on interpreting visual data — detecting objects, estimating depth, identifying edges, tracking motion. Many ControlNet preprocessors use computer vision algorithms.
+
+**confidence score** — In object detection/classification, a 0–1 probability that a detected region contains a particular class. e.g., "cat: 0.94."
+
+**depth map** — A grayscale image encoding estimated distance from the camera. Near = white, far = black (or inverted). Used by Depth ControlNet to preserve 3D structure across generations.
+
+**feature map** — The internal activation grid at a layer of a neural network — what the model "sees" at that stage. Useful for understanding what drives a model's output.
+
+**image captioning** — Automatically generating a text description of an image. Used to build training datasets (BLIP, WD-Tagger) and to prompt multimodal models.
+
+**LLaVA** — An open-source Visual Language Model that can describe, reason about, and answer questions on images. Frequently used in ComfyUI for automated analysis of generated outputs.
+
+**object detection** — Identifying and locating specific objects in an image, usually with bounding boxes and class labels. Used in preprocessing pipelines and for conditioning.
+
+**optical flow** — The apparent motion of pixels between consecutive video frames. Used in video generation and AnimateDiff conditioning for temporal consistency.
+
+**pose estimation** — Detecting the skeleton or keypoints of a human body in an image. Used by OpenPose ControlNet to transfer body position across generations.
+
+**preprocessing** — Transforming an input image before feeding it into a model — extracting edges, depth, pose, etc. ControlNet preprocessors (Canny, MiDaS depth, DWpose) live in comfyui_controlnet_aux.
+
+**segmentation** — Dividing an image into regions by category (sky, person, wall, etc.). Used for masked inpainting, style transfer to specific regions, or background removal.
+
+**VLM (Vision Language Model)** — A model that operates on both images and text — describing images, answering visual questions, or generating images from language. Examples: GPT-4V, LLaVA, Qwen-VL, BLIP-2. Distinct from pure text LLMs.
+
+---
+
+## Image Operations
+
+**canny edge detection** — A classic computer vision algorithm that extracts the sharp outlines of objects in an image. Output is a black-and-white edge map used as input for Canny ControlNet.
+
+**face restore** — Post-processing step that sharpens and corrects faces in generated images. Common tools: GFPGAN, CodeFormer. Often run after upscaling.
+
+**img2img (image-to-image)** — Using an existing image as the starting point for generation rather than pure noise. Denoise controls how much of the original survives. Lower denoise = closer to original.
+
+**inpainting** — Masking a region of an image and generating new content only within the mask, seamlessly blending with the surrounding image. Used for corrections, swaps, and extending details.
+
+**latent upscale** — Upscaling within latent space before decoding to pixels. Produces coherent results with more detail than pixel-level upscaling because the model adds content, not just interpolation.
+
+**mask** — A black-and-white image that marks which pixels to affect (white) and which to protect (black). Used for inpainting, compositing, and regional prompting.
+
+**outpainting** — Extending an image beyond its original borders by generating new content in masked regions. Opposite direction from inpainting.
+
+**tiled diffusion** — Splitting a large image into overlapping tiles, running diffusion on each tile, and stitching the results. Allows generating or upscaling at resolutions the model was not trained on.
+
+**upscale / upscaling** — Increasing image resolution. Nearest-neighbor and bicubic are simple interpolation; ESRGAN and Real-ESRGAN use neural networks to hallucinate realistic detail when scaling up 2–4×.
+
+---
+
+## Training
+
+**caption / tag** — Text paired with each training image describing its contents. During training, the model learns to associate the image with its caption. BLIP generates natural-language captions; WD-Tagger generates Danbooru-style keyword tags.
+
+**dataset** — The collection of images (and their captions) used to train a model or LoRA. Quality, diversity, and size of the dataset directly determine training outcomes.
+
+**DreamBooth** — A fine-tuning method that trains the full (or most of) a model on a small set of images to teach it a specific subject. More computationally expensive than LoRA but higher fidelity.
+
+**fine-tuning** — Continuing to train a pretrained model on a specific dataset so it learns new concepts, styles, or subjects while retaining general knowledge.
+
+**LoRA training** — Training a small adapter (LoRA) rather than the full model. Much lighter on VRAM and time. Tools: ai-toolkit, SimpleTuner, kohya_ss.
+
+**overfitting** — When a model memorizes training data too closely and loses the ability to generalize. Symptoms: the model can only reproduce training images rather than generalizing the style/concept.
+
+**regularization images** — A set of generic images included during training to prevent the model from forgetting general knowledge while learning new concepts. Counteracts overfitting.
+
+**steps (training)** — Training iterations — not the same as inference steps. Each training step updates the model weights slightly based on a sample from the dataset. Typical LoRA training: 500–3000 steps.
+
+**trigger word** — A rare or invented word added to prompts to activate a LoRA's learned concept. Helps the model distinguish "use this LoRA's style" from general knowledge.
+
+**WD-Tagger** — A tagger trained on Danbooru art data that automatically generates keyword tags (e.g., "1girl, brown hair, outdoors") for training images. Common alternative to BLIP captioning for anime/illustration datasets.
 
 ---
 
 ## Tools & Platforms
 
-**comfyui** — Open-source node-based UI for building AI image/video generation pipelines. Each processing step is a "node"; nodes are connected with wires to form a workflow.
+**comfyui** — Open-source node-based UI for building AI image and video generation pipelines. Each processing step is a "node"; nodes are wired together to form a workflow. Runs locally or on cloud GPUs.
 
-**node** — In ComfyUI, one processing step (e.g., "Load Model", "KSampler", "VAE Decode"). Nodes connect together to form the full pipeline.
+**comfyui manager** — A custom node that provides a GUI for installing, updating, and managing other custom nodes. Essential for most ComfyUI setups.
 
-**ai toolkit** — A set of tools for working with AI models — training, fine-tuning, inference. Commonly refers to tools like kohya_ss for LoRA training.
+**custom node** — A third-party extension that adds new node types to ComfyUI. Examples: IPAdapter Plus, ControlNet Aux, ComfyUI-Manager, AnimateDiff.
 
-**fal.ai** — A cloud platform for running AI models (Stable Diffusion, FLUX, etc.) without a local GPU. Pay per generation.
+**node** — In ComfyUI, one self-contained processing step (e.g., Load Checkpoint, KSampler, VAE Decode). Nodes have inputs and outputs connected by wires.
 
-**runpod.io** — A cloud GPU rental service. Rent an NVIDIA GPU by the hour to run ComfyUI or other AI tools remotely — useful for large models or fast generation.
+**workflow** — A saved ComfyUI graph (JSON file) defining the full set of nodes and connections for a particular task. API-format workflows (used by ComfyTD) are numbered-node JSON dictionaries.
 
-**weavy.ai** — An AI platform offering generative and creative AI tools accessible via browser.
+**safetensors** — A file format for storing model weights. Faster and safer to load than .ckpt or .bin because it cannot execute arbitrary code. Preferred format for all modern models.
+
+**ai-toolkit (ostris)** — A training framework for fine-tuning Flux and other models using LoRA. Supports multi-GPU, wandb logging, and flexible dataset configs.
+
+**simpletunner** — A training framework for LoRA and full fine-tuning of SDXL, SD1.5, and Flux. Focuses on ease of use and quality. Pairs well with ai-toolkit.
+
+**wandb (Weights & Biases)** — A training experiment tracker. Logs loss curves, sample images, and hyperparameters to a dashboard so you can compare training runs.
+
+**taggui** — A GUI application for manually viewing, editing, and writing captions/tags for training image datasets.
+
+**gradio** — A Python library for building quick browser-based ML demos and interfaces. Many open-source AI tools expose a Gradio UI.
+
+**streamlit** — A Python framework for building interactive data apps and ML dashboards. More flexible than Gradio; better suited to multi-page apps with state.
+
+**fal.ai** — A cloud platform for running AI models (Stable Diffusion, FLUX, video models) without a local GPU. Pay-per-generation API.
+
+**runpod.io** — A cloud GPU rental service. Rent NVIDIA GPUs by the hour to run ComfyUI, training jobs, or other workloads. Supports Docker templates.
+
+**vast.ai** — A GPU marketplace where individuals rent out their hardware. Often cheaper than RunPod. Requires more manual setup.
+
+**docker** — A platform for packaging software and its dependencies into portable containers. Many ComfyUI cloud setups use Docker images.
+
+**docker hub** — The public registry for Docker images. Search here for pre-built ComfyUI, A1111, and training environment images.
+
+**backblaze** — Cloud object storage (B2) often used to store training datasets, model checkpoints, and output images. S3-compatible API.
+
+**huggingface** — The central hub for open-source AI models, datasets, and papers. Most model weights are downloaded from here.
+
+**weavy.ai** — An AI platform for creative and generative tooling, accessible via browser.
 
 ---
 
 ## Image & Video Models
 
-**flux** — A family of high-quality image generation models (FLUX.1 [dev], FLUX.1 [schnell]) from Black Forest Labs (2024). Strong prompt adherence and detail.
+**flux** — A family of image generation models from Black Forest Labs (2024). FLUX.1 [dev] and [schnell]. Strong prompt adherence and fine detail, higher VRAM requirements than SD1.5.
 
-**qwen image** — Multimodal AI model from Alibaba that can both understand images and generate them. Part of the Qwen model family.
+**gaussian splatting** — A 3D scene representation technique that encodes a scene as millions of colored 3D Gaussians rather than meshes. Fast to render and photorealistic; used for NeRF-like 3D reconstruction from photos.
 
-**wan** — Wan2.1 — a video generation model capable of producing high-quality video from text or image prompts.
+**hunyuan** — HunyuanVideo and HunyuanDiT — image and video generation models from Tencent. HunyuanVideo produces high-quality long-form video.
 
-**hunyuan** — HunyuanVideo / HunyuanDiT — image and video generation models from Tencent, capable of long-form video generation.
+**kling** — Kling AI — a video generation model from Kuaishou. Known for realistic motion and high visual quality.
 
-**kling** — Kling AI — a video generation model from Kuaishou known for high-quality, realistic video output.
+**lcm (Latent Consistency Model)** — Reduces generation from 20–50 steps to 2–8. Applied as a LoRA on SD1.5 or SDXL. Sampler: lcm. Scheduler: sgm_uniform. CFG: 1–2.
 
-**veo** — Google DeepMind's video generation model (Veo 2). Generates high-quality, physically plausible video from text prompts.
+**ltx video** — LTX-Video by Lightricks. An efficient open-source video generation model designed for real-time or near-real-time generation.
 
-**nanobanana** — A community-built ComfyUI workflow/tool for lightweight or experimental image generation setups.
+**nanobanana** — A community-built ComfyUI workflow for lightweight or experimental image generation setups.
+
+**qwen image (Qwen-VL)** — Multimodal model from Alibaba that understands and reasons about images as well as generating them. Part of the Qwen model family.
+
+**sd 1.5 (stable diffusion 1.5)** — The foundational open-source image generation model from Stability AI. Small footprint (~4 GB), runs on most GPUs including older NVIDIA and Apple Silicon. Basis for most ControlNet and LoRA ecosystems.
+
+**sdxl (stable diffusion XL)** — Larger Stability AI model trained at 1024×1024. Better quality than SD1.5 but requires more VRAM.
+
+**tripo** — Tripo3D — an AI model for generating 3D assets (meshes) from text or image prompts.
+
+**veo** — Google DeepMind's video generation model (Veo 2). Produces high-quality, physically plausible video from text prompts.
+
+**wan** — Wan2.1 — a video generation model capable of producing high-quality video from text or image prompts. Open-source from Alibaba.

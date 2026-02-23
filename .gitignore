@@ -32,8 +32,10 @@ ENV/
 # ── sd15_touch — now its own repo (github.com/saloime/sd15_touch) ────────────
 sd15_touch/
 
-# ── Model weights ────────────────────────────────────────────────────────────
+# ── Model weights & LoRA training outputs ────────────────────────────────────
+safetensor/
 *.safetensors
+*.safetensors.metadata
 *.bin
 *.pt
 *.pth
