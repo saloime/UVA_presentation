@@ -36,6 +36,8 @@
 
 **seed** — The number that initializes the random noise the diffusion starts from. Same seed + same settings = same image. Change the seed to get a different result.
 
+**stochastic** — Randomly determined. Diffusion models are stochastic — they use controlled randomness at each step, which is why changing the seed produces a different image. The word appears in sampler names (e.g., DPM++ SDE) where SDE stands for Stochastic Differential Equation, the mathematical framework behind the noise process.
+
 **text conditioning** — Using a text prompt to steer what the model generates. The prompt is encoded by CLIP and injected into the model at each denoising step.
 
 **token** — The basic unit of text an AI model processes. Words are broken into tokens ("beautiful" ≈ 1–2 tokens). SD1.5 has a ~77-token limit per prompt; exceeding it truncates your prompt silently.

@@ -46,6 +46,15 @@ safetensor/
 .cache/
 **/.cache/
 
+# ── TouchDesigner files ──────────────────────────────────────────────────────
+*.toe
+*.tox
+*.toa
+
+# ── Personal documents (not version-controlled) ───────────────────────────────
+books/
+portfolios/
+
 # ── Images / media ───────────────────────────────────────────────────────────
 images/
 *.jpg
